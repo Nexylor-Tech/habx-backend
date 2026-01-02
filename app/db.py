@@ -13,3 +13,4 @@ db = client.habx_db
 user_collection = db.users
 habits_collection = db.habits
 tasks_collection = db.tasks
+habits_logs_collection = db.habitslog
