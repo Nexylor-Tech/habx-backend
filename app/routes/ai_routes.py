@@ -1,7 +1,14 @@
+from typing import List
+
 from fastapi import APIRouter, Depends
 
 from app.deps import auth
-from app.models.ai import AnalyticsResponse, GenerateRequest, SuggestionResponse
+from app.models.ai import (
+    AnalyticsResponse,
+    GenerateRequest,
+    SuggestionResponse,
+    WeeklyAnalyticsResponse,
+)
 from app.services import ai_service
 
 router = APIRouter(prefix="/ai", tags=["AI"])
@@ -16,3 +23,8 @@ async def generate_suggestions(request: GenerateRequest):
 @router.get("/analytics", response_model=AnalyticsResponse)
 async def generate_analytics(current_user: dict = Depends(auth.get_current_user)):
     return await ai_service.generate_analytics(current_user)
+
+
+@router.get("/analytics/weekly", response_model=List[WeeklyAnalyticsResponse])
+async def generate_insight_weekly(current_user: dict = Depends(auth.get_current_user)):
+    return await ai_service.generate_insight_weekly(current_user)

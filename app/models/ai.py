@@ -16,3 +16,8 @@ class SuggestionResponse(BaseModel):
 class AnalyticsResponse(BaseModel):
     insight: str
     tips: List[str]
+
+
+class WeeklyAnalyticsResponse(BaseModel):
+    date: str
+    count: int

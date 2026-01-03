@@ -1,11 +1,12 @@
 import json
+from datetime import datetime, timedelta, timezone
 from typing import List
 
 from fastapi import HTTPException
 from google import genai
 
 from app.config import settings
-from app.db import habits_collection, user_collection
+from app.db import habits_collection, habits_logs_collection
 
 client = genai.Client(api_key=settings.GEMINI_API_KEY.get_secret_value())
 
@@ -75,7 +76,6 @@ def generate_habits(goal: str):
 
 
 async def generate_analytics(user_id: dict) -> List[dict]:
-    print(user_id)
     if not settings.GEMINI_API_KEY.get_secret_value():
         raise HTTPException(status_code=500, detail="Gemini API key not found")
 
@@ -88,7 +88,6 @@ async def generate_analytics(user_id: dict) -> List[dict]:
                 "skipped": h["skip_count"],
             }
         )
-    print(habits)
     prompt = f"""
     The user has a main goal: "{user_id.get("goal")}".
     Here is their habit performance data: {json.dumps(habits)}.
@@ -105,5 +104,21 @@ async def generate_analytics(user_id: dict) -> List[dict]:
         text = res.text.replace("```json", "").replace("```", "").strip()
         return json.loads(text)
     except Exception as e:
-        print(f"Failed to generate insights: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed generation: {str(e)}")
+
+
+async def generate_insight_weekly(user_id: dict) -> List[dict]:
+    today = datetime.now(timezone.utc)
+    dates = [(today - timedelta(days=i)).isoformat() for i in range(6, -1, -1)]
+
+    pipeline = [
+        {"$match": {"user_id": user_id["_id"], "date": {"$in": dates}, "status": 1}},
+        {"$group": {"_id": "$date", "count": {"$sum": 1}}},
+    ]
+
+    results = await habits_logs_collection.aggregate(pipeline)
+    results_list = await results.to_list(length=7)
+    data_map = {item["_id"]: item["count"] for item in results_list}
+    stats = [{"date": d, "count": data_map.get(d, 0)} for d in dates]
+
+    return stats

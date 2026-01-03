@@ -23,9 +23,7 @@ async def create_habit(habit: dict, user_id: ObjectId) -> dict:
         "skip_count": 0,
     }
     result = await habits_collection.insert_one(new_habit)
-    print(f"Habit created with ID: {result.inserted_id}")
     habit["_id"] = str(result.inserted_id)
-    print(habit["_id"])
     return habit
 
 
