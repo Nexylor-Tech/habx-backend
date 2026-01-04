@@ -68,7 +68,9 @@ def generate_habits(goal: str):
     - "Meditate with breath for 6 minutes"
     '''
     try:
-        res = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
+        res = client.models.generate_content(
+            model="gemini-2.5-flash-lite", contents=prompt
+        )
         text = res.text.replace("```json", "").replace("```", "").strip()
         return json.loads(text)
     except Exception as e:
@@ -100,7 +102,9 @@ async def generate_analytics(user_id: dict) -> List[dict]:
     Do not include markdown formatting.
     """
     try:
-        res = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
+        res = client.models.generate_content(
+            model="gemini-2.5-flash-lite", contents=prompt
+        )
         text = res.text.replace("```json", "").replace("```", "").strip()
         return json.loads(text)
     except Exception as e:
@@ -108,17 +112,35 @@ async def generate_analytics(user_id: dict) -> List[dict]:
 
 
 async def generate_insight_weekly(user_id: dict) -> List[dict]:
-    today = datetime.now(timezone.utc)
+    today = datetime.now(timezone.utc).date()
     dates = [(today - timedelta(days=i)).isoformat() for i in range(6, -1, -1)]
 
     pipeline = [
-        {"$match": {"user_id": user_id["_id"], "date": {"$in": dates}, "status": 1}},
-        {"$group": {"_id": "$date", "count": {"$sum": 1}}},
+        {"$match": {"user_id": user_id["_id"], "date": {"$in": dates}}},
+        {
+            "$group": {
+                "_id": "$date",
+                "completed": {"$sum": {"$cond": [{"$eq": ["$status", 1]}, 1, 0]}},
+                "skipped": {"$sum": {"$cond": [{"$eq": ["$status", 0]}, 1, 0]}},
+            }
+        },
     ]
+    print(f"Pipeline: {pipeline}")
 
     results = await habits_logs_collection.aggregate(pipeline)
+    print(f"results: {results}")
     results_list = await results.to_list(length=7)
-    data_map = {item["_id"]: item["count"] for item in results_list}
-    stats = [{"date": d, "count": data_map.get(d, 0)} for d in dates]
-
+    print(results_list)
+    data_map = {
+        item["_id"]: {"completed": item["completed"], "skipped": item["skipped"]}
+        for item in results_list
+    }
+    print(data_map)
+    stats = []
+    for date in dates:
+        entry = data_map.get(date, {"completed": 0, "skipped": 0})
+        stats.append(
+            {"date": date, "completed": entry["completed"], "skipped": entry["skipped"]}
+        )
+        print(entry)
     return stats

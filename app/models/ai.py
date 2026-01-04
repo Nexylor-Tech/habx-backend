@@ -20,4 +20,5 @@ class AnalyticsResponse(BaseModel):
 
 class WeeklyAnalyticsResponse(BaseModel):
     date: str
-    count: int
+    completed: int
+    skipped: int
