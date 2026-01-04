@@ -1,3 +1,5 @@
+from typing import List
+
 from bson.objectid import ObjectId
 
 from app.db import habits_collection, habits_logs_collection
@@ -15,3 +17,13 @@ async def log_habit(habit_id: str, log: dict, user_id: ObjectId):
         {"_id": ObjectId(habit_id), "user_id": user_id},
         {"$inc": {field_to_inc: 1}},
     )
+
+
+async def get_habit_logs(habit_id: str, user_id: dict) -> List[dict]:
+    logs = []
+    async for log in habits_logs_collection.find(
+        {"habit_id": ObjectId(habit_id), "user_id": user_id}
+    ):
+        print(f"habit_id: {habit_id}, user_id: {user_id}")
+        logs.append(log)
+    return logs

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 
 from app.deps import auth
 from app.models.habit import HabitCreate, HabitResponse, HabitUpdate
-from app.models.habit_log import HabitLogCreate
+from app.models.habit_log import HabitLogCreate, LogResponse
 from app.services import habit_log_service, habit_service
 
 router = APIRouter(prefix="/habits", tags=["Habits"])
@@ -31,6 +31,15 @@ async def log_habit(
     return await habit_log_service.log_habit(
         habit_id, log.model_dump(), current_user["_id"]
     )
+
+
+@router.get("/{habit_id}/logs", response_model=List[LogResponse])
+async def get_habit_logs(
+    habit_id: str,
+    current_user: dict = Depends(auth.get_current_user),
+):
+    logs = await habit_log_service.get_habit_logs(habit_id, current_user["_id"])
+    return logs
 
 
 @router.patch("/{habit_id}")
