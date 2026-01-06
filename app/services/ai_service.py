@@ -1,12 +1,12 @@
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import List
 
 from fastapi import HTTPException
 from google import genai
 
 from app.config import settings
-from app.db import habits_collection, habits_logs_collection
+from app.db import analytics_cache, habits_collection, habits_logs_collection
 
 client = genai.Client(api_key=settings.GEMINI_API_KEY.get_secret_value())
 
@@ -78,8 +78,24 @@ def generate_habits(goal: str):
 
 
 async def generate_analytics(user_id: dict) -> List[dict]:
-    if not settings.GEMINI_API_KEY.get_secret_value():
-        raise HTTPException(status_code=500, detail="Gemini API key not found")
+    cache_data = await analytics_cache.find_one(
+        {"user_id": user_id["_id"], "type": "ai_insight"}
+    )
+
+    if cache_data:
+        created_at = cache_data.get("created_at")
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
+        if created_at and (datetime.now(timezone.utc) - created_at).days < 1:
+            return cache_data.get("data")
+
+    yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
+    has_logs = await habits_logs_collection.find_one(
+        {"user_id": user_id["_id"], "date": yesterday}
+    )
+
+    if not has_logs:
+        return [{"insight": "No data available", "tips": ["Finish some tasks"]}]
 
     habits = []
     async for h in habits_collection.find({"user_id": user_id["_id"]}):
@@ -90,6 +106,7 @@ async def generate_analytics(user_id: dict) -> List[dict]:
                 "skipped": h["skip_count"],
             }
         )
+
     prompt = f"""
     The user has a main goal: "{user_id.get("goal")}".
     Here is their habit performance data: {json.dumps(habits)}.
@@ -106,9 +123,25 @@ async def generate_analytics(user_id: dict) -> List[dict]:
             model="gemini-2.5-flash-lite", contents=prompt
         )
         text = res.text.replace("```json", "").replace("```", "").strip()
-        return json.loads(text)
+        data = json.loads(text)
+        await analytics_cache.update_one(
+            {"user_id": user_id["_id"]},
+            {
+                "$set": {
+                    "created_at": datetime.now(timezone.utc),
+                    "data": data,
+                    "type": "ai_insight",
+                }
+            },
+            upsert=True,
+        )
+
+        return data
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed generation: {str(e)}")
+        print(f"Error generating AI insight: {e}")
+        return [
+            {"insight": "Keep traking ur progress", "tips": ["Reveiew ur goals daily"]}
+        ]
 
 
 async def generate_insight_weekly(user_id: dict) -> List[dict]:
@@ -137,10 +170,10 @@ async def generate_insight_weekly(user_id: dict) -> List[dict]:
     }
     print(data_map)
     stats = []
-    for date in dates:
-        entry = data_map.get(date, {"completed": 0, "skipped": 0})
+    for d in dates:
+        entry = data_map.get(d, {"completed": 0, "skipped": 0})
         stats.append(
-            {"date": date, "completed": entry["completed"], "skipped": entry["skipped"]}
+            {"date": d, "completed": entry["completed"], "skipped": entry["skipped"]}
         )
         print(entry)
     return stats
