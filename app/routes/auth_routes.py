@@ -3,14 +3,14 @@ from datetime import timedelta
 from fastapi import APIRouter, Response
 
 from app.config import settings
-from app.models.user import LoginRequest, UserCreate
+from app.models.user import AuthResponse, LoginRequest, UserCreate
 from app.security import create_access_token
 from app.services import user_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/register")
+@router.post("/register", response_model=AuthResponse)
 async def register(data: UserCreate, res: Response):
     await user_service.register_user(data.email, data.password, data.goal)
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -25,7 +25,7 @@ async def register(data: UserCreate, res: Response):
     }
 
 
-@router.post("/login")
+@router.post("/login", response_model=AuthResponse)
 async def login(data: LoginRequest, res: Response):
     user = await user_service.authenticate_user(data.email, data.password)
 

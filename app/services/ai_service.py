@@ -77,7 +77,7 @@ def generate_habits(goal: str):
         raise HTTPException(status_code=500, detail=f"Failed generation: {str(e)}")
 
 
-async def generate_analytics(user_id: dict) -> List[dict]:
+async def generate_analytics(user_id: dict) -> dict:
     cache_data = await analytics_cache.find_one(
         {"user_id": user_id["_id"], "type": "ai_insight"}
     )
@@ -95,7 +95,7 @@ async def generate_analytics(user_id: dict) -> List[dict]:
     )
 
     if not has_logs:
-        return [{"insight": "No data available", "tips": ["Finish some tasks"]}]
+        return {"insight": "No data available", "tips": ["Finish some tasks"]}
 
     habits = []
     async for h in habits_collection.find({"user_id": user_id["_id"]}):
@@ -139,9 +139,10 @@ async def generate_analytics(user_id: dict) -> List[dict]:
         return data
     except Exception as e:
         print(f"Error generating AI insight: {e}")
-        return [
-            {"insight": "Keep traking ur progress", "tips": ["Reveiew ur goals daily"]}
-        ]
+        return {
+            "insight": "Keep traking ur progress",
+            "tips": ["Reveiew ur goals daily"],
+        }
 
 
 async def generate_insight_weekly(user_id: dict) -> List[dict]:
@@ -158,17 +159,13 @@ async def generate_insight_weekly(user_id: dict) -> List[dict]:
             }
         },
     ]
-    print(f"Pipeline: {pipeline}")
 
     results = await habits_logs_collection.aggregate(pipeline)
-    print(f"results: {results}")
-    results_list = await results.to_list(length=7)
-    print(results_list)
+    results_list = await results.to_list(length=1)
     data_map = {
         item["_id"]: {"completed": item["completed"], "skipped": item["skipped"]}
         for item in results_list
     }
-    print(data_map)
     stats = []
     for d in dates:
         entry = data_map.get(d, {"completed": 0, "skipped": 0})

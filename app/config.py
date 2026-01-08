@@ -13,6 +13,15 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7
     SECRET_KEY: SecretStr
+    # dodo
+    DODO_API_KEY: SecretStr
+    DODO_API_KEY_TEST: SecretStr
+    DODO_WEBHOOK_SECRET: SecretStr
+    DODO_ENVIRONMENT: str
+
+    # Subscription
+    PRODUCT_ID_PREMIUM: str
+    PRODUCT_ID_ELITE: str
 
     @field_validator("ALLOW_ORIGINS", mode="before")
     def parse_allow_origins(cls, v):

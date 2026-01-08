@@ -29,7 +29,11 @@ async def log_habit(
     current_user: dict = Depends(auth.get_current_user),
 ):
     return await habit_log_service.log_habit(
-        habit_id, log.model_dump(), current_user["_id"]
+        habit_id,
+        log.model_dump(),
+        current_user["_id"],
+        current_user["last_completed"],
+        current_user["streak"],
     )
 
 
