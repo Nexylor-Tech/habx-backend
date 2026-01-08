@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     PRODUCT_ID_PREMIUM: str
     PRODUCT_ID_ELITE: str
 
+    AI_LIMITS: dict[str, int] = {"free": 10, "premium": 30, "elite": 100}
+
     @field_validator("ALLOW_ORIGINS", mode="before")
     def parse_allow_origins(cls, v):
         if isinstance(v, str):

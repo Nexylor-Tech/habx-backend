@@ -15,7 +15,6 @@ product_ids = {
     "elite": settings.PRODUCT_ID_ELITE,
 }
 
-dodo_client = None
 if settings.DODO_API_KEY_TEST.get_secret_value():
     dodo_client = AsyncDodoPayments(
         bearer_token=settings.DODO_API_KEY_TEST.get_secret_value(),
@@ -56,6 +55,21 @@ async def create_checkout_session(data, user_id: dict) -> dict:
             "checkout_url": session.checkout_url,
             "session_id": session.session_id,
         }
+    except Exception as e:
+        print(f"Dodo error: {e}")
+        raise HTTPException(status_code=500, detail="Payment service error")
+
+
+async def cancel_subscription(user_id: ObjectId, sub_id: str):
+    try:
+        await dodo_client.subscriptions.update(
+            subscription_id=sub_id, cancel_at_next_billing_date=True
+        )
+        await user_collection.update_one(
+            {"_id": user_id}, {"$set": {"subscription_status": "cancelled"}}
+        )
+
+        return {"message": "Subscription cancelled"}
     except Exception as e:
         print(f"Dodo error: {e}")
         raise HTTPException(status_code=500, detail="Payment service error")

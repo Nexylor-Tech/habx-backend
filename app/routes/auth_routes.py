@@ -22,7 +22,13 @@ async def register(data: UserCreate, res: Response):
         "token_type": "bearer",
         "email": data.email,
         "goal": data.goal,
+        "subscription_tier": "free",
     }
+
+
+@router.post("/logout")
+async def logout():
+    return {"message": "Logged out successfully"}
 
 
 @router.post("/login", response_model=AuthResponse)

@@ -3,6 +3,7 @@ from typing import List
 
 from fastapi import HTTPException
 
+from app.config import settings
 from app.db import user_collection
 from app.security import hash_password, verify_password
 
@@ -17,6 +18,14 @@ async def register_user(email: str, original_password: str, goal: str):
             "goal": goal,
             "is_premium": False,
             "created_at": datetime.now(),
+            "subscription_tier": "free",
+            "dodo_customer_id": None,
+            "streak": 0,
+            "last_completed": None,
+            "ai_generation_count": 0,
+            "ai_generation_limit": settings.AI_LIMITS["free"],
+            "subscription_status": "active",
+            "subscription_expiry": None,
         }
     )
 
