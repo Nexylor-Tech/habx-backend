@@ -21,10 +21,16 @@ async def generate_suggestions(request: GenerateRequest):
 
 
 @router.get("/analytics", response_model=AnalyticsResponse)
-async def generate_analytics(current_user: dict = Depends(auth.get_current_user)):
-    return await ai_service.generate_analytics(current_user)
+async def generate_analytics(
+    current_user: dict = Depends(auth.get_current_user),
+    workspace_id: str = Depends(auth.get_current_workspace_id),
+):
+    return await ai_service.generate_analytics(current_user, workspace_id)
 
 
 @router.get("/analytics/weekly", response_model=List[WeeklyAnalyticsResponse])
-async def generate_insight_weekly(current_user: dict = Depends(auth.get_current_user)):
-    return await ai_service.generate_insight_weekly(current_user)
+async def generate_insight_weekly(
+    current_user: dict = Depends(auth.get_current_user),
+    workspace_id: str = Depends(auth.get_current_workspace_id),
+):
+    return await ai_service.generate_insight_weekly(current_user, workspace_id)

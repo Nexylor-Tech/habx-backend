@@ -8,7 +8,8 @@ class HabitLogCreate(BaseModel):
 
 class WeeklyStats(BaseModel):
     date: str
-    count: int
+    completed: int
+    skipped: int
 
 
 class LogResponse(BaseModel):

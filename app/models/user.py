@@ -16,4 +16,7 @@ class AuthResponse(BaseModel):
     access_token: str
     token_type: str
     email: EmailStr
-    goal: str
+    # goal: str
+    subscription_tier: str
+    workspace_limit: int 
+    current_workspace_id: str

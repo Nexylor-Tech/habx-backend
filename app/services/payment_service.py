@@ -9,23 +9,16 @@ from standardwebhooks.webhooks import Webhook
 
 from app.config import settings
 from app.db import user_collection
+from app.dodo_client import client
 
 product_ids = {
     "premium": settings.PRODUCT_ID_PREMIUM,
     "elite": settings.PRODUCT_ID_ELITE,
 }
 
-if settings.DODO_API_KEY_TEST.get_secret_value():
-    dodo_client = AsyncDodoPayments(
-        bearer_token=settings.DODO_API_KEY_TEST.get_secret_value(),
-        environment=settings.DODO_ENVIRONMENT,
-    )
-else:
-    raise HTTPException(status_code=400, detail="Dodo API key not found")
-
 
 async def create_checkout_session(data, user_id: dict) -> dict:
-    if not dodo_client:
+    if not client.dodo_client:
         raise HTTPException(status_code=503, detail="Payment service is unavailable")
 
     tier = data.tier.lower()
@@ -35,7 +28,7 @@ async def create_checkout_session(data, user_id: dict) -> dict:
     product_id = product_ids[tier]
 
     try:
-        session = await dodo_client.checkout_sessions.create(
+        session = await client.dodo_client.checkout_sessions.create(
             product_cart=[
                 {
                     "product_id": product_id,
@@ -49,7 +42,7 @@ async def create_checkout_session(data, user_id: dict) -> dict:
                 "customer_id": user_id.get("dodo_customer_id"),
             },
             metadata={"user_id": str(user_id["_id"]), "target_tier": tier},
-            return_url="http://localhost:3000/app/",
+            return_url="http://localhost:3000/home/",
         )
         return {
             "checkout_url": session.checkout_url,
@@ -62,7 +55,7 @@ async def create_checkout_session(data, user_id: dict) -> dict:
 
 async def cancel_subscription(user_id: ObjectId, sub_id: str):
     try:
-        await dodo_client.subscriptions.update(
+        await client.dodo_client.subscriptions.update(
             subscription_id=sub_id, cancel_at_next_billing_date=True
         )
         await user_collection.update_one(
@@ -97,7 +90,7 @@ async def dodo_webhook(req):
             },
         )
     except Exception as e:
-        raise HTTPException(status_code=400, detail="Invalid webhook signature")
+        raise HTTPException(status_code=400, detail=f"Invalid webhook signature {e}")
 
     try:
         event = json.load(payload_str)

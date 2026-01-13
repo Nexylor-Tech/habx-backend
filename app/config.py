@@ -15,15 +15,16 @@ class Settings(BaseSettings):
     SECRET_KEY: SecretStr
     # dodo
     DODO_API_KEY: SecretStr
-    DODO_API_KEY_TEST: SecretStr
     DODO_WEBHOOK_SECRET: SecretStr
     DODO_ENVIRONMENT: str
+    DODO_BASE_URL: AnyUrl
 
     # Subscription
     PRODUCT_ID_PREMIUM: str
     PRODUCT_ID_ELITE: str
 
-    AI_LIMITS: dict[str, int] = {"free": 10, "premium": 30, "elite": 100}
+    AI_LIMITS: dict = {"free": 10, "premium": 30, "elite": 100}
+    WORKSPACE_LIMITS: dict = {"free": 1, "premium": 20, "elite": 100}
 
     @field_validator("ALLOW_ORIGINS", mode="before")
     def parse_allow_origins(cls, v):

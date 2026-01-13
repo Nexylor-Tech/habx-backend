@@ -2,11 +2,17 @@ import json
 from datetime import date, datetime, timedelta, timezone
 from typing import List
 
+from bson import ObjectId
 from fastapi import HTTPException
 from google import genai
 
 from app.config import settings
-from app.db import analytics_cache, habits_collection, habits_logs_collection
+from app.db import (
+    analytics_cache,
+    habits_collection,
+    habits_logs_collection,
+    user_collection,
+)
 
 client = genai.Client(api_key=settings.GEMINI_API_KEY.get_secret_value())
 
@@ -77,9 +83,17 @@ def generate_habits(goal: str):
         raise HTTPException(status_code=500, detail=f"Failed generation: {str(e)}")
 
 
-async def generate_analytics(user_id: dict) -> dict:
+async def generate_analytics(user: dict, workspace_id: str) -> dict:
+    user_id = user["_id"]
+
+    usage = user.get("ai_generation_count", 0)
+    limit = user.get("ai_generation_limit", 10)
+
+    if usage >= limit:
+        raise HTTPException(status_code=403, detail="AI generation limit reached")
+
     cache_data = await analytics_cache.find_one(
-        {"user_id": user_id["_id"], "type": "ai_insight"}
+        {"workspace_id": ObjectId(workspace_id), "type": "ai_insight"}
     )
 
     if cache_data:
@@ -98,7 +112,7 @@ async def generate_analytics(user_id: dict) -> dict:
         return {"insight": "No data available", "tips": ["Finish some tasks"]}
 
     habits = []
-    async for h in habits_collection.find({"user_id": user_id["_id"]}):
+    async for h in habits_collection.find({"workspace_id": ObjectId(workspace_id)}):
         habits.append(
             {
                 "title": h["title"],
@@ -125,7 +139,7 @@ async def generate_analytics(user_id: dict) -> dict:
         text = res.text.replace("```json", "").replace("```", "").strip()
         data = json.loads(text)
         await analytics_cache.update_one(
-            {"user_id": user_id["_id"]},
+            {"workspace_id": ObjectId(workspace_id), "type": "ai_insight"},
             {
                 "$set": {
                     "created_at": datetime.now(timezone.utc),
@@ -134,6 +148,10 @@ async def generate_analytics(user_id: dict) -> dict:
                 }
             },
             upsert=True,
+        )
+
+        await user_collection.update_one(
+            {"_id": user_id}, {"$inc": {"ai_generation_cound": 1}}
         )
 
         return data
@@ -145,7 +163,7 @@ async def generate_analytics(user_id: dict) -> dict:
         }
 
 
-async def generate_insight_weekly(user_id: dict) -> List[dict]:
+async def generate_insight_weekly(workspace_id: str, user_id: dict) -> List[dict]:
     today = datetime.now(timezone.utc).date()
     dates = [(today - timedelta(days=i)).isoformat() for i in range(6, -1, -1)]
 

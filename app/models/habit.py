@@ -1,6 +1,9 @@
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, BeforeValidator, Field
+from typing_extensions import Annotated
+
+PyObjectId = Annotated[str, BeforeValidator(str)]
 
 
 class HabitCreate(BaseModel):
@@ -15,7 +18,7 @@ class HabitUpdate(BaseModel):
 
 
 class HabitResponse(BaseModel):
-    id: str = Field(alias="_id")
+    id: PyObjectId = Field(alias="_id")
     title: str
     category: str
     icon: str
