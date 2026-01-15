@@ -25,4 +25,5 @@ USER appuser
 EXPOSE 8000
 
 # Run the application.
-CMD ["python", "server.py"]
+#CMD ["python", "server.py"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

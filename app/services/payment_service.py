@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import List
 
 from bson import ObjectId
-from dodopayments import AsyncDodoPayments
+from bson.errors import InvalidId
 from fastapi import HTTPException
 from standardwebhooks.webhooks import Webhook
 
@@ -17,7 +17,7 @@ product_ids = {
 }
 
 
-async def create_checkout_session(data, user_id: dict) -> dict:
+async def create_checkout_session(data, user: dict) -> dict:
     if not client.dodo_client:
         raise HTTPException(status_code=503, detail="Payment service is unavailable")
 
@@ -28,6 +28,12 @@ async def create_checkout_session(data, user_id: dict) -> dict:
     product_id = product_ids[tier]
 
     try:
+        product = await client.dodo_client.products.retrieve(product_id)
+        product_metadata = product.metadata or {}
+        customer = await client.dodo_client.customers.retrieve(user["dodo_customer_id"])
+        ai_generation_limit = product_metadata.get("ai_limit", 10)
+        workspace_limit = product_metadata.get("workspace_limit", 1)
+        plan = product_metadata.get("plan", "free")
         session = await client.dodo_client.checkout_sessions.create(
             product_cart=[
                 {
@@ -37,11 +43,14 @@ async def create_checkout_session(data, user_id: dict) -> dict:
             ],
             billing_address=None,
             customer={
-                "email": user_id["email"],
-                "name": user_id.get("name", None),
-                "customer_id": user_id.get("dodo_customer_id"),
+                "customer_id": customer.customer_id,
             },
-            metadata={"user_id": str(user_id["_id"]), "target_tier": tier},
+            metadata={
+                "user_id": str(user["_id"]),
+                "ai_generation_limit": str(ai_generation_limit),
+                "workspace_limit": str(workspace_limit),
+                "plan": plan,
+            },
             return_url="http://localhost:3000/home/",
         )
         return {
@@ -49,7 +58,7 @@ async def create_checkout_session(data, user_id: dict) -> dict:
             "session_id": session.session_id,
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Payment service error")
+        raise HTTPException(status_code=500, detail=f"Payment service error: {str(e)}")
 
 
 async def cancel_subscription(user_id: ObjectId, sub_id: str):
@@ -63,22 +72,22 @@ async def cancel_subscription(user_id: ObjectId, sub_id: str):
 
         return {"message": "Subscription cancelled"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Payment service error")
+        raise HTTPException(status_code=500, detail=f"Payment service error: {str(e)}")
 
 
 async def dodo_webhook(req):
     payload_bytes = await req.body()
     payload_str = payload_bytes.decode("utf-8")
-
     webhook_id = req.headers.get("webhook-id")
     webhook_signature = req.headers.get("webhook-signature")
     webhook_timestamp = req.headers.get("webhook-timestamp")
 
     if not all([webhook_id, webhook_signature, webhook_timestamp]):
-        raise HTTPException(status_code=400, detail="Missing required headers")
+        raise HTTPException(status_code=400, detail="Missing webhook headers")
 
     try:
-        wh = Webhook(settings.DODO_WEBHOOK_SECRET)
+        wh = Webhook(settings.DODO_WEBHOOK_SECRET.get_secret_value())
+
         wh.verify(
             payload_str,
             {
@@ -87,65 +96,73 @@ async def dodo_webhook(req):
                 "webhook-timestamp": webhook_timestamp,
             },
         )
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid webhook signature {e}")
 
+    except Exception as e:
+        raise HTTPException(
+            status_code=401, detail=f"Invalid webhook signature {str(e)}"
+        )
     try:
-        event = json.load(payload_str)
-        event_type = event.get("type")
-        data = event.get("data", {})
+        event = json.loads(payload_str)
 
-        if event_type in ["subscription.active", "subscription.renewed"]:
-            user_id = data.get("metadata", {}).get("user_id")
-            email = data.get("customer", {}).get("email")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON payload")
 
-            query = None
-            if user_id:
-                query = {"_id": ObjectId(user_id)}
-            elif email:
-                query = {"email": email}
+    event_type = event.get("type")
+    data = event.get("data") or {}
 
-            if query:
-                target_tier = data.get("metadata", {}).get("target_tier", "premium")
-                await user_collection.update_one(
-                    query,
-                    {
-                        "$set": {
-                            "is_premium": True,
-                            "subscription_tier": target_tier,
-                            "dodo_customer_id": data.get("customer_id"),
-                            "dodo_subscription_id": data.get("subscription_id"),
-                            "updated_at": datetime.now(timezone.utc),
-                        }
-                    },
-                )
-        elif event_type in [
-            "subscription.cancelled",
-            "subscription.failed",
-            "subscription.active",
-        ]:
-            user_id = data.get("metadata", {}).get("user_id")
-            email = data.get("customer", {}).get("email")
+    metadata = data.get("metadata") or {}
+    customer = data.get("customer") or {}
 
-            query = None
-            if user_id:
-                query = {"_id": ObjectId(user_id)}
-            elif email:
-                query = {"email": email}
+    user_id = metadata.get("user_id")
+    email = customer.get("email")
 
-            if query:
-                await user_collection.update_one(
-                    query,
-                    {
-                        "$set": {
-                            "is_premium": False,
-                            "subscription_tier": "free",
-                            "updated_at": datetime.now(timezone.utc),
-                        }
-                    },
-                )
+    query = None
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    if user_id:
+        try:
+            query = {"_id": ObjectId(user_id)}
+        except InvalidId:
+            raise HTTPException(status_code=400, detail="Invalid user id")
 
-    return {"message": "User updated successfully"}
+    elif email:
+        query = {"email": email}
+
+    if not query:
+        return {"message": "No user found"}
+
+    if event_type in ["subscription.active", "subscription.renewed"]:
+        print(f"Metabase {metadata}")
+        ai_generation_limit = metadata.get("ai_generation_limit")
+        workspace_limit = metadata.get("workspace_limit")
+        plan = metadata.get("plan")
+
+        await user_collection.update_one(
+            query,
+            {
+                "$set": {
+                    "is_premium": True,
+                    "subscription_tier": plan,
+                    "ai_generation_limit": ai_generation_limit,
+                    "workspace_limit": workspace_limit,
+                    "plan": plan,
+                    "updated_at": datetime.now(timezone.utc),
+                }
+            },
+        )
+
+    elif event_type in ["subscription.cancelled", "subscription.failed"]:
+        await user_collection.update_one(
+            query,
+            {
+                "$set": {
+                    "is_premium": False,
+                    "subscription_tier": "free",
+                    "ai_generation_limit": 10,
+                    "workspace_limit": 1,
+                    "plan": "free",
+                    "updated_at": datetime.now(timezone.utc),
+                }
+            },
+        )
+
+    return {"status": "success"}

@@ -20,6 +20,7 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=[
             "http://localhost:3000",
+            "https://blue-ends-walk.loca.lt/",
             "https://www.habx.life",
         ],
         allow_credentials=True,
