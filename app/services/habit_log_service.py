@@ -85,6 +85,7 @@ async def log_habit(habit_id: str, log: dict, user: dict) -> dict:
         "message": "Logged",
         "completion_count": updated_habit["completion_count"],
         "skip_count": updated_habit["skip_count"],
+        "workspace_streak": updated_habit["streak", 0],
     }
 
 

@@ -156,7 +156,6 @@ async def generate_analytics(user: dict, workspace_id: str) -> dict:
 
         return data
     except Exception as e:
-        print(f"Error generating AI insight: {e}")
         return {
             "insight": "Keep traking ur progress",
             "tips": ["Reveiew ur goals daily"],
@@ -190,5 +189,4 @@ async def generate_insight_weekly(workspace_id: str, user_id: dict) -> List[dict
         stats.append(
             {"date": d, "completed": entry["completed"], "skipped": entry["skipped"]}
         )
-        print(entry)
     return stats

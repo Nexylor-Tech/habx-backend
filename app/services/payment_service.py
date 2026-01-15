@@ -49,7 +49,6 @@ async def create_checkout_session(data, user_id: dict) -> dict:
             "session_id": session.session_id,
         }
     except Exception as e:
-        print(f"Dodo error: {e}")
         raise HTTPException(status_code=500, detail="Payment service error")
 
 
@@ -64,7 +63,6 @@ async def cancel_subscription(user_id: ObjectId, sub_id: str):
 
         return {"message": "Subscription cancelled"}
     except Exception as e:
-        print(f"Dodo error: {e}")
         raise HTTPException(status_code=500, detail="Payment service error")
 
 

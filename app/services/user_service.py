@@ -32,7 +32,6 @@ async def create_dodo_customer(dodo_email: str, dodo_name: str) -> Optional[str]
 async def register_user(email: str, original_password: str, goal: str) -> dict:
     if await user_collection.find_one({"email": email}):
         raise HTTPException(status_code=400, detail="Email already exists")
-    print(f"email: {email}, original_password: {original_password}, goal: {goal}")
     dodo_customer_id = await create_dodo_customer(email, email.split("@")[0])
     if not dodo_customer_id:
         raise HTTPException(status_code=500, detail="Failed to create DODO customer")
@@ -45,8 +44,6 @@ async def register_user(email: str, original_password: str, goal: str) -> dict:
             "created_at": datetime.now(),
             "subscription_tier": "free",
             "dodo_customer_id": dodo_customer_id,
-            "streak": 0,
-            "last_completed": None,
             "ai_generation_count": 0,
             "ai_generation_limit": settings.AI_LIMITS["free"],
             "workspace_limit": settings.WORKSPACE_LIMITS["free"],
@@ -60,6 +57,8 @@ async def register_user(email: str, original_password: str, goal: str) -> dict:
         "name": "My Workspace",
         "goal": goal,
         "created_at": datetime.now(timezone.utc),
+        "streak": 0,
+        "last_completed": None,
     }
 
     ws_res = await workspace_collection.insert_one(new_workspace)
@@ -67,7 +66,6 @@ async def register_user(email: str, original_password: str, goal: str) -> dict:
     access_token = create_access_token(
         data={"sub": email}, expire_delta=access_token_expires
     )
-    print(access_token)
     return {
         "access_token": access_token,
         "token_type": "bearer",
@@ -102,25 +100,38 @@ async def authenticate_user(email: str, password: str):
     }
 
 
-async def get_me(user_id: dict) -> dict:
-    streak = user_id.get("streak", 0)
-    last_completed = user_id.get("last_completed")
-    if last_completed:
-        last_completed = datetime.strptime(last_completed, "%Y-%m-%d").date()
-        today = datetime.now(timezone.utc).date()
-        yesterday = today - timedelta(days=1)
+async def get_me(user: dict) -> dict:
+    # created_at = user_id["created_at"]
 
-        # If last completion was before yesterday, streak is broken
-        if last_completed < yesterday:
-            streak = 0
-            # Optional: Update DB to reflect broken streak immediately
-            await user_collection.update_one({"_id": user_id}, {"$set": {"streak": 0}})
+    expiry = user.get("subscription_expiry")
+    if expiry and isinstance(expiry, str):
+        expiry_date = datetime.fromisoformat(expiry)
+        if (
+            datetime.now(timezone.utc) > expiry_date
+            and user.get("subscription_tier") != "free"
+        ):
+            await user_collection.update_one(
+                {"_id": user["_id"]},
+                {
+                    "$set": {"subscription_tier": "free"},
+                    "is_premium": False,
+                    "subscription_status": "expired",
+                    "ai_generation_limit": settings.AI_LIMITS["free"],
+                    "workspace_limit": settings.WORKSPACE_LIMITS["free"],
+                },
+            )
+            user["subscription_tier"] = "free"
+            user["workspace_limit"] = settings.WORKSPACE_LIMITS["free"]
+    created_at = user.get("created_at")
 
-    created_at = user_id["created_at"]
     return {
-        "email": user_id["email"],
-        "goal": user_id.get("goal", "Not Set"),
-        "isPremium": user_id.get("is_premium", False),
-        "streak": streak,
+        "email": user["email"],
+        "subscription_Tier": user.get("subscription_tier", "free"),
+        "isPremium": user.get("is_premium", False),
+        "subscription_status": user.get("subscription_status", "active"),
+        "subscription_expiry": user.get("subscription_expiry", None),
+        "aiUsage": user.get("ai_generation_count", 0),
+        "aiLimit": user.get("ai_generation_limit", 10),
+        "workspaceLimit": user.get("workspace_limit", 1),
         "created_at": created_at.isoformat() if created_at else None,
     }

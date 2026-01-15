@@ -21,7 +21,6 @@ async def get_habits(workspace_id: str) -> List[dict]:
 
     for h in habits:
         h["today_habits"] = log_map.get(str(h["_id"]))
-    print(habits)
     return habits
 
 
