@@ -16,9 +16,8 @@ RUN adduser \
     --no-create-home \
     --uid "${UID}" \
     appuser
-
-RUN --mount=type=cache,id=pip-cache,target=/root/.cache/pip \
-    python -m pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt .
+RUN python -m pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 USER appuser
