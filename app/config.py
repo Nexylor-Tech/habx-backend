@@ -1,12 +1,9 @@
-from dotenv import load_dotenv
 from pydantic import AnyUrl, SecretStr, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
-load_dotenv()
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env")
+    # model_config = SettingsConfigDict(env_file=".env")
     MONGO_URL: SecretStr
     GEMINI_API_KEY: SecretStr
     ALLOW_ORIGINS: list[str] = ["*"]
