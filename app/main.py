@@ -6,8 +6,10 @@ from app.routes import (
     auth_routes,
     habit_routes,
     health,
+    payment_routes,
     task_routes,
     user_routes,
+    workspace_routes,
 )
 
 
@@ -28,6 +30,8 @@ def create_app() -> FastAPI:
     app.include_router(habit_routes.router)
     app.include_router(task_routes.router)
     app.include_router(health.router)
+    app.include_router(payment_routes.router)
+    app.include_router(workspace_routes.router)
     return app
 
 

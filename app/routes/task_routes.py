@@ -20,7 +20,6 @@ async def create_task(
     task: TaskCreate, current_user: dict = Depends(auth.get_current_user)
 ):
     task = await task_service.create_task(task.model_dump(), current_user["_id"])
-    print(task)
     return task
 
 

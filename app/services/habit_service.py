@@ -1,21 +1,32 @@
+from datetime import datetime, timezone
 from typing import List
 
 from bson import ObjectId
 
-from app.db import habits_collection
+from app.db import habits_collection, habits_logs_collection
 
 
-async def get_habits(user_id: ObjectId) -> List[dict]:
+async def get_habits(workspace_id: str) -> List[dict]:
     habits = []
-    async for habit in habits_collection.find({"user_id": user_id}):
-        habit["_id"] = str(habit["_id"])
+    async for habit in habits_collection.find({"workspace_id": ObjectId(workspace_id)}):
         habits.append(habit)
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    habit_ids = [h["_id"] for h in habits]
+
+    logs = await habits_logs_collection.find(
+        {"habit_id": {"$in": habit_ids}, "date": today}
+    ).to_list(None)
+
+    log_map = {str(log["habit_id"]): log["status"] for log in logs}
+
+    for h in habits:
+        h["today_habits"] = log_map.get(str(h["_id"]))
     return habits
 
 
-async def create_habit(habit: dict, user_id: ObjectId) -> dict:
+async def create_habit(habit, workspace_id: str):
     new_habit = {
-        "user_id": user_id,
+        "workspace_id": ObjectId(workspace_id),
         "title": habit["title"],
         "category": habit["category"],
         "icon": habit.get("icon", "activity"),
@@ -23,10 +34,7 @@ async def create_habit(habit: dict, user_id: ObjectId) -> dict:
         "skip_count": 0,
     }
     result = await habits_collection.insert_one(new_habit)
-    print(f"Habit created with ID: {result.inserted_id}")
-    habit["_id"] = str(result.inserted_id)
-    print(habit["_id"])
-    return habit
+    return await habits_collection.find_one({"_id": result.inserted_id})
 
 
 async def update_habit(
