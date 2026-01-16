@@ -22,7 +22,7 @@ async def generate_habits(goal: str, user: dict):
         raise HTTPException(status_code=500, detail="Gemini API key not found")
 
     usage = user.get("ai_generation_count", 0)
-    limit = user.get("ai_generation_limit", 100)
+    limit = user.get("ai_generation_limit", 10)
 
     if usage >= int(limit):
         raise HTTPException(status_code=403, detail="AI generation limit reached")

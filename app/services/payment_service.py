@@ -130,7 +130,6 @@ async def dodo_webhook(req):
         return {"message": "No user found"}
 
     if event_type in ["subscription.active", "subscription.renewed"]:
-        print(f"Metabase {metadata}")
         ai_generation_limit = metadata.get("ai_generation_limit")
         workspace_limit = metadata.get("workspace_limit")
         plan = metadata.get("plan")

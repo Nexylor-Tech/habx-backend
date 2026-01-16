@@ -10,24 +10,21 @@ router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
 
 @router.get("/", response_model=List[TaskResponse])
-async def get_tasks(current_user: dict = Depends(auth.get_current_user)):
-    tasks = await task_service.get_tasks(current_user["_id"])
-    return tasks
+async def get_tasks(workspace_id: str = Depends(auth.get_current_workspace_id)):
+    return await task_service.get_tasks(workspace_id)
 
 
-@router.post("/")
+@router.post("/", response_model=TaskResponse)
 async def create_task(
-    task: TaskCreate, current_user: dict = Depends(auth.get_current_user)
+    task: TaskCreate, workspace_id: str = Depends(auth.get_current_workspace_id)
 ):
-    task = await task_service.create_task(task.model_dump(), current_user["_id"])
-    return task
+    return await task_service.create_task(task.model_dump(), workspace_id)
 
 
 @router.patch("/{task_id}")
 async def update_task(
     task_id: str,
     update: TaskUpdate,
-    current_user: dict = Depends(auth.get_current_user),
 ):
-    await task_service.update_task(task_id, update.completed, current_user["_id"])
+    await task_service.update_task(task_id, update)
     return {"message": "Task updated successfully"}

@@ -80,12 +80,13 @@ async def log_habit(habit_id: str, log: dict, user: dict) -> dict:
                     {"$set": {"streak": new_streak, "last_completed": today_str}},
                 )
     updated_habit = await habits_collection.find_one({"_id": ObjectId(habit_id)})
-    updated_habit["_id"] = str(updated_habit["_id"])
+    # updated_habit["_id"] = str(updated_habit["_id"])
+    updated_workspace = await workspace_collection.find_one({"_id": workspace["_id"]})
     return {
         "message": "Logged",
         "completion_count": updated_habit["completion_count"],
         "skip_count": updated_habit["skip_count"],
-        "workspace_streak": updated_habit["streak", 0],
+        "workspace_streak": updated_workspace["streak", 0],
     }
 
 

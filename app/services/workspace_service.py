@@ -37,7 +37,7 @@ async def create_workspace(ws, user: dict):
     count = await workspace_collection.count_documents({"user_id": user_id})
     limit = user.get("workspace_limit", 1)
 
-    if not count <= limit:
+    if not count <= int(limit):
         raise HTTPException(
             status_code=403,
             detail="Workspace Limit rerached, please upgrade ur account to create more.",

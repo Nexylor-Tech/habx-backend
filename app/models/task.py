@@ -1,14 +1,23 @@
-from pydantic import BaseModel, Field
+from typing import Optional
+
+from pydantic import BaseModel, BeforeValidator, Field
+from typing_extensions import Annotated
+
+PyObjectId = Annotated[str, BeforeValidator(str)]
+
 
 class TaskCreate(BaseModel):
     title: str
-    deadline: str
+    deadline: Optional[str] = ""
+
 
 class TaskUpdate(BaseModel):
-    completed: bool
+    status: int = Field(default=0)
+
 
 class TaskResponse(BaseModel):
-    id: str = Field(alias="_id")
+    id: PyObjectId = Field(alias="_id")
     title: str
-    deadline: str
-    completed: bool
+    deadline: Optional[str] = None
+    status: int = Field(default=0)
+    is_overdue: Optional[int] = Field(default=0)
