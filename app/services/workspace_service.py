@@ -3,7 +3,13 @@ from datetime import datetime, timedelta, timezone
 from bson import ObjectId
 from fastapi import HTTPException
 
-from app.db import habits_collection, workspace_collection
+from app.db import (
+    analytics_cache,
+    habits_collection,
+    habits_logs_collection,
+    tasks_collection,
+    workspace_collection,
+)
 
 
 async def get_workspace(user: ObjectId):
@@ -82,3 +88,19 @@ async def update_workspace(workspace_id: str, update: dict, user):
         workspace = await workspace_collection.find_one({"_id": ObjectId(workspace_id)})
 
     return workspace
+
+
+async def delete_workspace(workspace_id: str, user_id: ObjectId) -> dict:
+    ws_id = ObjectId(workspace_id)
+    workspace = await workspace_collection.find_one({"_id": ws_id, "user_id": user_id})
+
+    if not workspace:
+        raise HTTPException(status_code=404, detail="Workspace not found")
+    await habits_collection.delete_many({"workspace_id": ws_id})
+    await tasks_collection.delete_many({"workspace_id": ws_id})
+    await habits_logs_collection.delete_many({"workspace_id": ws_id})
+    await analytics_cache.delete_many({"workspace_id": ws_id})
+
+    await workspace_collection.delete_one({"_id": ws_id})
+
+    return {"message": "Workspace deleted successfully"}

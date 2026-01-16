@@ -17,9 +17,16 @@ from app.db import (
 client = genai.Client(api_key=settings.GEMINI_API_KEY.get_secret_value())
 
 
-def generate_habits(goal: str):
+async def generate_habits(goal: str, user: dict):
     if not settings.GEMINI_API_KEY.get_secret_value():
         raise HTTPException(status_code=500, detail="Gemini API key not found")
+
+    usage = user.get("ai_generation_count", 0)
+    limit = user.get("ai_generation_limit", 100)
+
+    if usage >= int(limit):
+        raise HTTPException(status_code=403, detail="AI generation limit reached")
+
     prompt = f'''
     You are an expert habit coach, behavioral psychologist, and wellness guide.
 
@@ -78,18 +85,24 @@ def generate_habits(goal: str):
             model="gemini-2.5-flash-lite", contents=prompt
         )
         text = res.text.replace("```json", "").replace("```", "").strip()
+        await user_collection.update_one(
+            {"_id": user["_id"]}, {"$inc": {"ai_generation_count": 1}}
+        )
         return json.loads(text)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed generation: {str(e)}")
 
 
 async def generate_analytics(user: dict, workspace_id: str) -> dict:
+    if not workspace_id:
+        raise HTTPException(status_code=400, detail="Workspace not found")
+
     user_id = user["_id"]
 
     usage = user.get("ai_generation_count", 0)
     limit = user.get("ai_generation_limit", 10)
 
-    if usage >= limit:
+    if usage >= int(limit):
         raise HTTPException(status_code=403, detail="AI generation limit reached")
 
     cache_data = await analytics_cache.find_one(
@@ -105,7 +118,7 @@ async def generate_analytics(user: dict, workspace_id: str) -> dict:
 
     yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
     has_logs = await habits_logs_collection.find_one(
-        {"user_id": user_id["_id"], "date": yesterday}
+        {"user_id": user_id, "date": yesterday}
     )
 
     if not has_logs:
@@ -122,7 +135,7 @@ async def generate_analytics(user: dict, workspace_id: str) -> dict:
         )
 
     prompt = f"""
-    The user has a main goal: "{user_id.get("goal")}".
+    The user has a main goal: "{user.get("goal")}".
     Here is their habit performance data: {json.dumps(habits)}.
 
     Based on this data, generate:
@@ -151,23 +164,27 @@ async def generate_analytics(user: dict, workspace_id: str) -> dict:
         )
 
         await user_collection.update_one(
-            {"_id": user_id}, {"$inc": {"ai_generation_cound": 1}}
+            {"_id": user_id}, {"$inc": {"ai_generation_count": 1}}
         )
 
         return data
-    except Exception as e:
+    except Exception:
         return {
             "insight": "Keep traking ur progress",
             "tips": ["Reveiew ur goals daily"],
         }
 
 
-async def generate_insight_weekly(workspace_id: str, user_id: dict) -> List[dict]:
+async def generate_insight_weekly(workspace_id: str) -> List[dict]:
+    habits = await habits_collection.find(
+        {"workspace_id": ObjectId(workspace_id)}
+    ).to_list()
+    habit_ids = [h["_id"] for h in habits]
     today = datetime.now(timezone.utc).date()
     dates = [(today - timedelta(days=i)).isoformat() for i in range(6, -1, -1)]
 
     pipeline = [
-        {"$match": {"user_id": user_id["_id"], "date": {"$in": dates}}},
+        {"$match": {"habit_id": {"$in": habit_ids}, "date": {"$in": dates}}},
         {
             "$group": {
                 "_id": "$date",
