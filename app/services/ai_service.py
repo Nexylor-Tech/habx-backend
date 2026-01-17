@@ -1,3 +1,4 @@
+# AI Service
 import json
 from datetime import date, datetime, timedelta, timezone
 from typing import List
@@ -17,6 +18,7 @@ from app.db import (
 client = genai.Client(api_key=settings.GEMINI_API_KEY.get_secret_value())
 
 
+
 async def generate_habits(goal: str, user: dict):
     if not settings.GEMINI_API_KEY.get_secret_value():
         raise HTTPException(status_code=500, detail="Gemini API key not found")
@@ -27,6 +29,7 @@ async def generate_habits(goal: str, user: dict):
     if usage >= int(limit):
         raise HTTPException(status_code=403, detail="AI generation limit reached")
 
+      
     prompt = f'''
     You are an expert habit coach, behavioral psychologist, and wellness guide.
 

@@ -21,7 +21,7 @@ async def get_tasks(ws_id: str) -> List[dict]:
 
 
 async def create_task(task: dict, workspace_id: str):
-    today = datetime.now(timezone.utc)
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     is_overdue = 0
     if task["deadline"] and task["deadline"] < today:
         is_overdue = 1

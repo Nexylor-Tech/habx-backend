@@ -1,7 +1,7 @@
+#AI Service
 from typing import List
 
 from fastapi import APIRouter, Depends
-from google.genai.types import Dict
 
 from app.deps import auth
 from app.models.ai import (
@@ -15,13 +15,11 @@ from app.services import ai_service
 router = APIRouter(prefix="/ai", tags=["AI"])
 
 
-@router.post("/generate-suggestions", response_model=list[SuggestionResponse])
+@router.post("/generate-suggestions", response_model=List[SuggestionResponse])
 async def generate_suggestions(
     request: GenerateRequest, user: dict = Depends(auth.get_current_user)
 ):
-    suggestions = ai_service.generate_habits(request.goal, user)
-    return suggestions
-
+    return await ai_service.generate_habits(request.goal, user)
 
 @router.get("/analytics", response_model=AnalyticsResponse)
 async def generate_analytics(
