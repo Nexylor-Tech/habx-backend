@@ -2,19 +2,19 @@ from pydantic import BaseModel, EmailStr
 
 
 class UserCreate(BaseModel):
-    email: EmailStr
-    password: str
+    first_name: str
+    last_name: str
     goal: str
 
 
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
+# class LoginRequest(BaseModel):
+#    email: EmailStr
+#    password: str
 
 
 class AuthResponse(BaseModel):
-    access_token: str
-    token_type: str
+    # access_token: str
+    # token_type: str
     email: EmailStr
     # goal: str
     subscription_tier: str
