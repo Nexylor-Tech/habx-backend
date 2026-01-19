@@ -30,3 +30,11 @@ async def update_workspace(
     return await workspace_service.update_workspace(
         workspace_id, update.model_dump(), current_user
     )
+
+
+@router.delete("/{workspace_id}")
+async def delete_workspace(
+    workspace_id: str,
+    current_user: dict = Depends(auth.get_current_user),
+):
+    return await workspace_service.delete_workspace(workspace_id, current_user["_id"])

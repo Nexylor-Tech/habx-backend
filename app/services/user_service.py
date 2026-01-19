@@ -39,7 +39,6 @@ async def register_user(email: str, original_password: str, goal: str) -> dict:
         {
             "email": email,
             "password": hash_password(original_password),
-            "goal": goal,
             "is_premium": False,
             "created_at": datetime.now(),
             "subscription_tier": "free",
@@ -112,13 +111,13 @@ async def get_me(user: dict) -> dict:
         ):
             await user_collection.update_one(
                 {"_id": user["_id"]},
-                {
-                    "$set": {"subscription_tier": "free"},
+                {"$set": {
+                    "subscription_tier": "free",
                     "is_premium": False,
                     "subscription_status": "expired",
                     "ai_generation_limit": settings.AI_LIMITS["free"],
                     "workspace_limit": settings.WORKSPACE_LIMITS["free"],
-                },
+                }},
             )
             user["subscription_tier"] = "free"
             user["workspace_limit"] = settings.WORKSPACE_LIMITS["free"]
@@ -126,10 +125,10 @@ async def get_me(user: dict) -> dict:
 
     return {
         "email": user["email"],
-        "subscription_Tier": user.get("subscription_tier", "free"),
+        "subscriptionTier": user.get("subscription_tier", "free"),
         "isPremium": user.get("is_premium", False),
-        "subscription_status": user.get("subscription_status", "active"),
-        "subscription_expiry": user.get("subscription_expiry", None),
+        "subscriptionStatus": user.get("subscription_status", "active"),
+        "subscriptionExpiry": user.get("subscription_expiry", None),
         "aiUsage": user.get("ai_generation_count", 0),
         "aiLimit": user.get("ai_generation_limit", 10),
         "workspaceLimit": user.get("workspace_limit", 1),
