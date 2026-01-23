@@ -1,5 +1,15 @@
-# How to run the application
-Install Docker on your machine.
-> run key.py to generate the SECRET_KEY
-create a .env file with the following the `.env.example` file
-then `docker compose up --build`.
+# Elysia with Bun runtime
+
+## Getting Started
+To get started with this template, simply paste this command into your terminal:
+```bash
+bun create elysia ./elysia-example
+```
+
+## Development
+To start the development server run:
+```bash
+bun run dev
+```
+
+Open http://localhost:3000/ with your browser to see the result.

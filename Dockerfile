@@ -1,29 +1,34 @@
-ARG PYTHON_VERSION=3.13.5
-FROM python:${PYTHON_VERSION}-slim AS base
-
-ENV PYTHONDONTWRITEBYTECODE=1
-
-ENV PYTHONUNBUFFERED=1
+# -------- BUILD STAGE --------
+FROM oven/bun:latest AS builder
 
 WORKDIR /app
 
-ARG UID=10001
-RUN adduser \
-    --disabled-password \
-    --gecos "" \
-    --home "/nonexistent" \
-    --shell "/sbin/nologin" \
-    --no-create-home \
-    --uid "${UID}" \
-    appuser
-COPY requirements.txt .
-RUN python -m pip install --no-cache-dir -r requirements.txt
+# Install deps first (better caching)
+COPY package.json bun.lockb ./
+RUN bun install
 
+# Copy source
 COPY . .
-USER appuser
 
-EXPOSE 8000
+# Bundle the server
+RUN bun build src/index.ts \
+  --outdir dist \
+  --target bun \
+  --minify \
+  --sourcemap=external
 
-# Run the application.
-#CMD ["python", "server.py"]
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# -------- RUNTIME STAGE --------
+FROM oven/bun:slim
+
+WORKDIR /app
+
+# Copy only built output
+COPY --from=builder /app/dist ./dist
+
+# Optional: copy .env if needed (or inject via runtime env)
+# COPY .env .env
+
+EXPOSE 3000
+
+CMD ["bun", "dist/index.js"]
+
