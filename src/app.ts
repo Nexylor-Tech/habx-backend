@@ -17,9 +17,19 @@ export function createApp() {
   const app = new Elysia();
   const auth = getAuth();
 
-  app.use(cors({ origin: ["http://localhost:5173"], credentials: true }))
-    .all("/api/auth/*", ({ request }) => auth.handler(request.clone()))
-    .derive(authMiddleware);
+  app.use(cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  }));
+
+  app.options("*", ({ set }) => {
+    set.status = 204;
+  });
+
+  app.all("/api/auth/*", ({ request }) => auth.handler(request.clone()));
+
+  app.derive(authMiddleware);
+
 
   userRoutes(app);
   workspaceRoutes(app);
