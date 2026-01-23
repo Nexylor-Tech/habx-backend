@@ -3,7 +3,6 @@
 export const env = {
   MONGO_URI: process.env.MONGO_URI,
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,
-  // TODO: add better auth here
   BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
   BETTER_AUTH_BASE_URL: process.env.BETTER_AUTH_BASE_URL,
   DODO_API_KEY: process.env.DODO_API_KEY,
