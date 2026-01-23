@@ -15,7 +15,7 @@ export const connectDB = async () => {
     console.log("Database Online");
     return mongoose.connection.getClient();
   } catch (e) {
-    console.error("Database failed");
+    console.error("Database failed", e);
     process.exit(1)
   }
 }
