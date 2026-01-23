@@ -13,8 +13,6 @@ export const connectDB = async () => {
   try {
     await mongoose.connect(env.MONGO_URI, clientOptions);
     console.log("Database Online");
-    console.log("ENV CHECK:", process.env.MONGO_URI ? "OK" : "MISSING");
-    console.log("ENV CHECK:", env.MONGO_URI ? "OK" : "MISSING");
     console.log(env.MONGO_URI)
     return mongoose.connection.getClient();
   } catch (e) {

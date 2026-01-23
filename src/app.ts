@@ -18,8 +18,6 @@ export function createApp() {
   const auth = getAuth();
 
   app.use(cors({ origin: ["http://localhost:5173"], credentials: true }))
-    .use(serverTiming())
-    .use(swagger())
     .all("/api/auth/*", ({ request }) => auth.handler(request.clone()))
     .derive(authMiddleware);
 
