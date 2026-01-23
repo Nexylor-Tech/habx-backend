@@ -1,34 +1,51 @@
-# Include any files or directories that you don't want to be copied to your
-# container here (e.g., local build artifacts, temporary files, etc.).
-#
-# For more help, visit the .dockerignore file reference guide at
-# https://docs.docker.com/go/build-context-dockerignore/
+# Dependency folders
+node_modules
+.bun
+.pnpm-store
 
-**/.DS_Store
-**/__pycache__
-**/.venv
-**/.classpath
-**/.dockerignore
-**/.env
-**/.git
-**/.gitignore
-**/.project
-**/.settings
-**/.toolstarget
-**/.vs
-**/.vscode
-**/*.*proj.user
-**/*.dbmdl
-**/*.jfm
-**/bin
-**/charts
-**/docker-compose*
-**/compose.y*ml
-**/Dockerfile*
-**/node_modules
-**/npm-debug.log
-**/obj
-**/secrets.dev.yaml
-**/values.dev.yaml
-LICENSE
+# Build outputs (handled by Docker build stage)
+dist
+build
+.out
+.next
+
+# Vite cache
+.vite
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+bun-debug.log*
+
+# Environment files (inject at runtime instead)
+.env
+.env.local
+.env.production
+.env.development
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor config
+.vscode
+.idea
+*.swp
+
+# Git
+.git
+.gitignore
+
+# Tests & coverage
+coverage
+__tests__
+
+# Docs / misc
 README.md
+*.md
+
+# Docker files themselves (optional)
+docker-compose.yml
+Dockerfile
+
