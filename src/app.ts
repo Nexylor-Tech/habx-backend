@@ -19,7 +19,6 @@ export function createApp() {
   app.use(cors({
     origin: [env.BETTER_AUTH_DOMAIN_URL],
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-workspace-id']
   }))
     .all("/api/auth/*", ({ request }) => auth.handler(request.clone()))
     .derive(authMiddleware);
