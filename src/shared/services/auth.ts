@@ -12,19 +12,9 @@ let authInstance: ReturnType<typeof betterAuth> | null = null;
 export const createAuth = (mongoClient: any) => {
   if (authInstance) return authInstance;
 
-  console.log(env.BETTER_AUTH_BASE_URL);
   authInstance = betterAuth({
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_BASE_URL,
-    logger: {
-      disabled: false,
-      disableColors: false,
-      level: "error",
-      log: (level, message, ...args) => {
-        // Custom logging implementation
-        console.log(`[${level}] ${message}`, ...args);
-      },
-    },
     trustedOrigins: [
       env.BETTER_AUTH_DOMAIN_URL,
       "http://localhost:3000",
@@ -47,11 +37,6 @@ export const createAuth = (mongoClient: any) => {
         sameSite: "none",
         partitioned: true,
       },
-      // crossSubDomainCookies: {
-      //   enabled: true,
-      //   additionalCookies: ["custom_cookie"],
-      //   domain: env.BETTER_AUTH_DOMAIN_URL
-      // },
     },
     user: {
       additionalFields: {

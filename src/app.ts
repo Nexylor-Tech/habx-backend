@@ -15,7 +15,6 @@ import { env } from "./config";
 export function createApp() {
   const app = new Elysia();
   const auth = getAuth();
-  console.log(`Better auth domain: ${env.BETTER_AUTH_DOMAIN_URL}`);
   app
     .use(
       cors({
