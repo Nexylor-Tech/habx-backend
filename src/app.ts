@@ -10,12 +10,17 @@ import { workspaceRoutes } from './modules/workspace/workspace.routes';
 import { habitRoutes } from './modules/habit/habit.routes';
 import { taskRoutes } from './modules/task/task.routes';
 import { analyticsRoutes } from './modules/analytics/analytics.routes';
+import { env } from './config';
 
 export function createApp() {
   const app = new Elysia();
   const auth = getAuth();
 
-  app.use(cors({ origin: ["http://localhost:5173", "http://127.0.0.1:5173"], credentials: true }))
+  app.use(cors({
+    origin: [env.BETTER_AUTH_DOMAIN_URL],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-workspace-id']
+  }))
     .all("/api/auth/*", ({ request }) => auth.handler(request.clone()))
     .derive(authMiddleware);
 

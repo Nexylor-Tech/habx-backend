@@ -26,8 +26,7 @@ export const createAuth = (mongoClient: any) => {
       }
     },
     trustedOrigins: [
-      'http://localhost:5173',
-      'http://127.0.0.1:5173'
+      env.BETTER_AUTH_DOMAIN_URL
     ],
 
     database: mongodbAdapter(mongoClient.db(), mongoClient),
@@ -48,10 +47,9 @@ export const createAuth = (mongoClient: any) => {
       crossSubDomainCookies: {
         enabled: true,
         additionalCookies: ["custom_cookie"],
-        domain: "http://localhost:3000"
+        domain: env.BETTER_AUTH_DOMAIN_URL
       },
     },
-    cookiePrefix: "habx",
     user: {
       additionalFields: {
         first_name: { type: "string", required: false },
