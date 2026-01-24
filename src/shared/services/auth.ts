@@ -40,7 +40,6 @@ export const createAuth = (mongoClient: any) => {
     },
     advanced: {
       defaultCookieAttributes: {
-        sameSite: "none",
         httpOnly: true,
         secure: true,
       },

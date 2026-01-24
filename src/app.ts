@@ -15,12 +15,14 @@ import { env } from './config';
 export function createApp() {
   const app = new Elysia();
   const auth = getAuth();
-
+  console.log(`Better auth domain: ${env.BETTER_AUTH_DOMAIN_URL}`)
   app.use(cors({
     origin: [env.BETTER_AUTH_DOMAIN_URL],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-workspace-id']
   }))
-    .all("/api/auth/*", ({ request }) => auth.handler(request.clone()))
+    .mount(auth.handler)
     .derive(authMiddleware);
 
 
