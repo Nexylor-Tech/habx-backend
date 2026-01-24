@@ -44,7 +44,12 @@ export const createAuth = (mongoClient: any) => {
         sameSite: "none",
         httpOnly: true,
         secure: true,
-      }
+      },
+      crossSubDomainCookies: {
+        enabled: true,
+        additionalCookies: ["custom_cookie"],
+        domain: "http://localhost:3000"
+      },
     },
     cookiePrefix: "habx",
     user: {
