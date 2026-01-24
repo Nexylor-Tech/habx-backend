@@ -15,10 +15,7 @@ export function createApp() {
   const app = new Elysia();
   const auth = getAuth();
 
-  app.use(cors({
-    origin: 'http://localhost:5173',
-    credentials: true,
-  }))
+  app.use(cors({ origin: ["http://localhost:5173", "http://127.0.0.1:5173"], credentials: true }))
     .all("/api/auth/*", ({ request }) => auth.handler(request.clone()))
     .derive(authMiddleware);
 
