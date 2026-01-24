@@ -24,7 +24,6 @@ export const taskRoutes = (app: Elysia) => app
       const firstWs = await Workspace.findOne({ user_id: u.id });
       workspaceId = firstWs?._id;
     }
-    console.log(body);
     return await TaskService.createTask(workspaceId, body.title, body.deadline);
   }, {
     body: t.Object({

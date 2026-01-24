@@ -6,7 +6,6 @@ import { Log } from '../log/log.model';
 
 export async function logHabit(habitId: string, userId: string, date: string, statusVal: number) {
   const habit = await Habit.findById(habitId);
-  console.log(`Habit ID = ${habitId}\nHabit = ${habit}`);
   if (!habit) throw new Error("Habit not found.");
 
   const ws = await Workspace.findById(habit.workspace_id);

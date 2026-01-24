@@ -67,9 +67,7 @@ export async function generateAiSuggestion(userId: string, goal: string) {
     - "Meditate with breath for 6 minutes"
 `
   const result = await useGemini(prompt);
-  console.log(result);
   const text = (result || "").trim().replace(/```json|```/g, '');
-  console.log(text);
   await User.findByIdAndUpdate(userId, { $inc: { ai_generation_count: 1 } });
   return JSON.parse(text);
 

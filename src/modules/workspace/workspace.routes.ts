@@ -7,7 +7,7 @@ import { User } from '../user/user.model'
 import { Habit } from '../habit/habit.model'
 import { Task } from '../task/task.model'
 import { Log } from '../log/log.model'
-// TODO: ADD Tasks and Analytics here
+import { AnalyticsCache } from '../analytics/analytics.model'
 import { updateWorkspaceStreaks } from './workspace.service';
 
 export const workspaceRoutes = (app: Elysia) => app
@@ -40,7 +40,6 @@ export const workspaceRoutes = (app: Elysia) => app
         }));
         await Habit.insertMany(habits);
       }
-      console.log(newWs)
       return newWs.toObject();
     } catch (e) {
       console.error("Workspace creation error", e);
@@ -78,13 +77,9 @@ export const workspaceRoutes = (app: Elysia) => app
     const ws = await Workspace.findOne({ _id: id, user_id: u.id });
     if (!ws) { set.status = 404; return "Workspace not found"; }
     await Habit.deleteMany({ workspace_id: id });
-    console.log("Habits deleted")
     await Task.deleteMany({ workspace_id: id });
-    console.log("Tasks deleted")
     await Log.deleteMany({ workspace_id: id });
-    console.log("Logs deleted")
-    console.log(id)
-    // TODO: Add other fields to be deleted before workspace
+    await AnalyticsCache.deleteMany({ workspace_id: id });
     await Workspace.deleteOne({ _id: id });
 
     return { message: "Workspace Deleted" };
