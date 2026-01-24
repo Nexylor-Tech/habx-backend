@@ -12,16 +12,41 @@ let authInstance: ReturnType<typeof betterAuth> | null = null
 export const createAuth = (mongoClient: any) => {
   if (authInstance) return authInstance;
 
+  console.log(env.BETTER_AUTH_BASE_URL);
   authInstance = betterAuth({
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_BASE_URL,
+    logger: {
+      disabled: false,
+      disableColors: false,
+      level: "error",
+      log: (level, message, ...args) => {
+        // Custom logging implementation
+        console.log(`[${level}] ${message}`, ...args);
+      }
+    },
     trustedOrigins: [
       'http://localhost:5173',
       'http://127.0.0.1:5173'
     ],
 
     database: mongodbAdapter(mongoClient.db(), mongoClient),
-    emailAndPassword: { enabled: true },
+    emailAndPassword: {
+      enabled: true,
+      disableSignUp: false,
+      requireEmailVerification: false,
+      minPasswordLength: 8,
+      maxPasswordLength: 128,
+      autoSignIn: true,
+    },
+    advanced: {
+      defaultCookieAttributes: {
+        sameSite: "none",
+        httpOnly: true,
+        secure: true,
+      }
+    },
+    cookiePrefix: "habx",
     user: {
       additionalFields: {
         first_name: { type: "string", required: false },
