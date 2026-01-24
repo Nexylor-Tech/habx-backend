@@ -22,8 +22,8 @@ export function createApp() {
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-workspace-id']
   }))
-    .mount('/auth', auth.handler)
-    .derive(authMiddleware);
+    .mount(auth.handler)
+  // .derive(authMiddleware);
 
 
   userRoutes(app);
