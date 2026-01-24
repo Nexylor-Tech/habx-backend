@@ -4,6 +4,7 @@
 import { Elysia } from "elysia";
 import { cors } from "@elysiajs/cors";
 import { getAuth } from "./shared/services/auth";
+import { authMiddleware } from "./shared/middleware/auth";
 import { userRoutes } from "./modules/user/user.routes";
 import { workspaceRoutes } from "./modules/workspace/workspace.routes";
 import { habitRoutes } from "./modules/habit/habit.routes";
@@ -28,7 +29,8 @@ export function createApp() {
         allowedHeaders: ["Content-Type", "Authorization", "x-workspace-id"],
       }),
     )
-    .mount(auth.handler);
+    .mount(auth.handler)
+    .derive(authMiddleware);
 
   userRoutes(app);
   workspaceRoutes(app);
