@@ -16,7 +16,6 @@ export const createAuth = (mongoClient: any) => {
   authInstance = betterAuth({
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_BASE_URL,
-    basePath: '/auth',
     logger: {
       disabled: false,
       disableColors: false,
