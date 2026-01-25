@@ -16,11 +16,12 @@ const UserSchema = new Schema({
   last_name: String,
   is_premium: { type: Boolean, default: false },
   subscription_tier: { type: String, default: 'free' },
-  subscription_status: { type: String, default: 'active' },
+  subscription_status: { type: String, default: 'inactive' },
   subscription_expiry: String,
   ai_generation_count: { type: Number, default: 0 },
   ai_generation_limit: { type: Number, default: 10 },
   workspace_limit: { type: Number, default: 1 },
+  dodo_subscription_id: { type: String, default: null }
 })
 
 export const User = mongoose.model('User', UserSchema, 'user');

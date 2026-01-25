@@ -10,6 +10,8 @@ import { workspaceRoutes } from "./modules/workspace/workspace.routes";
 import { habitRoutes } from "./modules/habit/habit.routes";
 import { taskRoutes } from "./modules/task/task.routes";
 import { analyticsRoutes } from "./modules/analytics/analytics.routes";
+import { paymentRoutes } from "./modules/payments/payments.routes";
+import { dodoWebhookRoutes } from "./modules/webhooks/dodo.routes";
 import { env } from "./config";
 
 export function createApp() {
@@ -36,6 +38,9 @@ export function createApp() {
   habitRoutes(app);
   taskRoutes(app);
   analyticsRoutes(app);
+  paymentRoutes(app);
+  dodoWebhookRoutes(app);
+
   app.get("/", () => ({ status: "Elysia fired up" }));
 
   return app;
