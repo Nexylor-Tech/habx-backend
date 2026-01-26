@@ -1,3 +1,4 @@
+// Implement any new routes here related to payment
 import { Elysia, t } from "elysia";
 import * as PaymentService from './payments.service';
 
@@ -12,4 +13,22 @@ export const paymentRoutes = (app: Elysia) => app
     }
   }, {
     body: t.Object({ tier: t.String() })
+  })
+  .patch('/subscriptions/cancel', async ({ u, set }: any) => {
+    if (!u) { set.status = 401; return "Unauthorized"; };
+    try {
+      return await PaymentService.cancelSubscription(u.id);
+    } catch (e: any) {
+      set.status = 400;
+      return e.message;
+    }
+  })
+  .post('/subscriptions/changepaymentmethod', async ({ u, set }: any) => {
+    if (!u) { set.status = 401; return "Unauthorized"; }
+    try {
+      return await PaymentService.paymentMethodChange(u.id);
+    } catch (e: any) {
+      set.status = 400;
+      return e.message;
+    }
   })

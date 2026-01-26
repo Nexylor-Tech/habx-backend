@@ -38,6 +38,7 @@ export const createAuth = (mongoClient: any) => {
         partitioned: true,
       },
     },
+    // TODO: ADD GOOGLE SSO
     user: {
       additionalFields: {
         first_name: { type: "string", required: false },

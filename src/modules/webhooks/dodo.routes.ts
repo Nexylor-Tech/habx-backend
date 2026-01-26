@@ -26,7 +26,6 @@ export const dodoWebhookRoutes = (app: Elysia) => app
     const data = event.data || {}
     // WARN: Add security validation if the user exists or not
     const meta = data.metadata || {}
-
     if (type === 'subscription.active' || type === 'subscription.renewed' || type === 'subscription.plan_changed') {
       const tier = meta.target_tier;
 
@@ -39,14 +38,32 @@ export const dodoWebhookRoutes = (app: Elysia) => app
         subscription_expiry: data.next_billing_date,
         dodo_subscription_id: data.subscription_id
       });
-    } else if (type === 'subscription.failed' || type === 'subscription.expired') {
+    } else if (type === 'subscription.failed') {
+      const dbUser = await User.findById(meta.user_id)
+      await User.findByIdAndUpdate(meta.user_id, {
+        is_premium: false,
+        subscription_tier: dbUser?.subscription_tier,
+        ai_generation_limit: dbUser?.ai_generation_limit,
+        workspce_limits: dbUser?.workspace_limit,
+        subscription_status: dbUser?.subscription_status
+      });
+    } else if (type === 'subscription.updated') {
+      await User.findByIdAndUpdate(meta.user_id, {
+        subscription_status: 'cancel_scheduled'
+      });
+    } else if (type === 'subscription.cancelled' || type === 'subscription.expired') {
       await User.findByIdAndUpdate(meta.user_id, {
         is_premium: false,
         subscription_tier: 'free',
         ai_generation_limit: AI_LIMITS['free'],
         workspce_limits: WORKSPACE_LIMITS['free'],
         subscription_status: 'inactive'
-      });
+      })
+    } else if (type === 'subscription.on_hold') {
+      await User.findByIdAndUpdate(meta.user_id, {
+        subscription_status: 'on_hold',
+        subscription_expiry: data.next_billing_date
+      })
     }
     return { status: "success" }
   })
