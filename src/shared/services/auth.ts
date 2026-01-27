@@ -38,7 +38,14 @@ export const createAuth = (mongoClient: any) => {
         partitioned: true,
       },
     },
-    // TODO: ADD GOOGLE SSO
+    // TODO: ADD EMAIL VERIFICATION
+    socialProviders: {
+      google: {
+        prompt: "select_account",
+        clientId: env.GOOGLE_CLIENT_ID as string,
+        clientSecret: env.GOOGLE_CLIENT_SECRET as string,
+      },
+    },
     user: {
       additionalFields: {
         first_name: { type: "string", required: false },
