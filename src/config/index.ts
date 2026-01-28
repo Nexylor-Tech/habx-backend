@@ -12,10 +12,12 @@ export const env = {
   PRODUCT_ID_PREMIUM: process.env.PRODUCT_ID_PREMIUM,
   PRODUCT_ID_ELITE: process.env.PRODUCT_ID_ELITE,
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
-  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+  EMAIL_USER: process.env.EMAIL_USER,
+  EMAIL_PASSWORD: process.env.EMAIL_PASSWORD,
 }
 
 
 export const AI_LIMITS: Record<string, number> = { free: 10, premium: 30, elite: 100 }
-export const WORKSPACE_LIMITS: Record<string, number> = { free: 1, premium: 20, elite: 100 }
+export const WORKSPACE_LIMITS: Record<string, number> = { free: 10, premium: 30, elite: 100 }
 

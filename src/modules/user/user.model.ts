@@ -20,7 +20,7 @@ const UserSchema = new Schema({
   subscription_expiry: String,
   ai_generation_count: { type: Number, default: 0 },
   ai_generation_limit: { type: Number, default: 10 },
-  workspace_limit: { type: Number, default: 1 },
+  workspace_limit: { type: Number, default: 10 },
   dodo_subscription_id: { type: String, default: null }
 })
 

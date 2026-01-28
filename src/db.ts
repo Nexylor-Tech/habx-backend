@@ -5,9 +5,6 @@
 import mongoose from "mongoose";
 import { env } from './config';
 
-
-
-
 const clientOptions = { serverApi: { version: '1', strict: true, deprecationErrors: true } };
 export const connectDB = async () => {
   try {

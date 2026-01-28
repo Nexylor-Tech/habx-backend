@@ -4,10 +4,13 @@
 import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { env } from "../../config";
-
+import { WORKSPACE_LIMITS, AI_LIMITS } from "../../config";
 import { Workspace } from "../../modules/workspace/workspace.model";
+import { emailService } from "../../modules/email/email.service";
 
 let authInstance: ReturnType<typeof betterAuth> | null = null;
+
+
 
 export const createAuth = (mongoClient: any) => {
   if (authInstance) return authInstance;
@@ -29,6 +32,17 @@ export const createAuth = (mongoClient: any) => {
       minPasswordLength: 8,
       maxPasswordLength: 128,
       autoSignIn: true,
+      sendResetPassword: async ({ user, url, token }, request) => {
+        //TODO: Password Reset
+        try {
+          await emailService.sendPasswordResetEmail(user.email, token, user.name);
+        } catch (error) {
+          console.error(`Failed to send password reset email`);
+        }
+      },
+      onPasswordReset: async ({ user }, request) => {
+        console.log(`Password has been reset ${user.email} has been reset.`)
+      }
     },
     advanced: {
       defaultCookieAttributes: {
@@ -38,7 +52,16 @@ export const createAuth = (mongoClient: any) => {
         partitioned: true,
       },
     },
-    // TODO: ADD EMAIL VERIFICATION
+    emailVerification: {
+      sendVerificationEmail: async ({ user, url, token }) => {
+        // const verificationUrl = `${env.BETTER_AUTH_BASE_URL}/api/auth/verify-email?token=${token}&callbackURL=${encodeURIComponent(env.BETTER_AUTH_DOMAIN_URL + '/')}`;
+        try {
+          await emailService.sendVerificationEmail(user.email, url, token, user.name)
+        } catch (error) {
+          console.error(`Failed to send verification email`, error);
+        }
+      }
+    },
     socialProviders: {
       google: {
         prompt: "select_account",
@@ -51,8 +74,8 @@ export const createAuth = (mongoClient: any) => {
         first_name: { type: "string", required: false },
         last_name: { type: "string", required: false },
         subscription_tier: { type: "string", defaultValue: "free" },
-        workspace_limit: { type: "number", defaultValue: 1 },
-        ai_generation_limit: { type: "number", defaultValue: 10 },
+        workspace_limit: { type: "number", defaultValue: WORKSPACE_LIMITS['free'] },
+        ai_generation_limit: { type: "number", defaultValue: AI_LIMITS['free'] },
         is_premium: { type: "boolean", defaultValue: false },
       },
     },
