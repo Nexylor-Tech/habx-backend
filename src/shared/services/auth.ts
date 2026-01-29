@@ -28,12 +28,11 @@ export const createAuth = (mongoClient: any) => {
     emailAndPassword: {
       enabled: true,
       disableSignUp: false,
-      requireEmailVerification: false,
+      requireEmailVerification: true,
       minPasswordLength: 8,
       maxPasswordLength: 128,
       autoSignIn: true,
       sendResetPassword: async ({ user, url, token }, request) => {
-        //TODO: Password Reset
         try {
           await emailService.sendPasswordResetEmail(user.email, token, user.name);
         } catch (error) {
@@ -54,7 +53,6 @@ export const createAuth = (mongoClient: any) => {
     },
     emailVerification: {
       sendVerificationEmail: async ({ user, url, token }) => {
-        // const verificationUrl = `${env.BETTER_AUTH_BASE_URL}/api/auth/verify-email?token=${token}&callbackURL=${encodeURIComponent(env.BETTER_AUTH_DOMAIN_URL + '/')}`;
         try {
           await emailService.sendVerificationEmail(user.email, url, token, user.name)
         } catch (error) {

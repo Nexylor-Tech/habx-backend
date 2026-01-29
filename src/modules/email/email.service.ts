@@ -1,5 +1,5 @@
-import VerificationEmail from "./templates/verificationEmail"; //ignore the error
-import PasswordResetEmail from "./templates/passwordResetEmail";
+import VerificationEmail from "./templates/verificationEmail"; //ignore the error related to jsx
+import PasswordResetEmail from "./templates/passwordResetEmail"; //ignore the error related to jsx
 import { render } from "@react-email/components";
 import { sendEmail } from '../../modules/email/email.model'
 import { env } from '../../config'
@@ -23,7 +23,7 @@ export const emailService = {
   },
 
   sendPasswordResetEmail: async (to: string, token: string, userName?: string) => {
-    const resetUrl = `${env.BETTER_AUTH_DOMAIN_URL}/verify-email?token=${token}`;
+    const resetUrl = `${env.BETTER_AUTH_DOMAIN_URL}/reset-password?token=${token}`;
     const emailHtml = await render(
       PasswordResetEmail({
         resetUrl,
