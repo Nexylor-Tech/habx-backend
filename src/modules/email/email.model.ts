@@ -1,3 +1,4 @@
+// email send function
 import { transporter } from './transporter';
 import { env } from '../../config';
 

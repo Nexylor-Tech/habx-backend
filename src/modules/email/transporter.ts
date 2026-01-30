@@ -1,3 +1,4 @@
+// transporter for nodemailer
 import nodemailer from 'nodemailer'
 import { env } from '../../config';
 

@@ -1,3 +1,4 @@
+// list all the email services and import them in betterauth / dodo payments
 import VerificationEmail from "./templates/verificationEmail"; //ignore the error related to jsx
 import PasswordResetEmail from "./templates/passwordResetEmail"; //ignore the error related to jsx
 import { render } from "@react-email/components";

@@ -1,34 +1,29 @@
-# -------- BUILD STAGE --------
 FROM oven/bun:latest AS builder
 
 WORKDIR /app
 
-# Install deps first (better caching)
 COPY package.json bun.lock ./
-RUN bun install
+RUN bun install --frozen-lockfile
 
-# Copy source
 COPY . .
 
-# Bundle the server
-RUN bun build src/index.ts \
-  --outdir dist \
-  --target bun \
-  --minify \
-  --sourcemap=external
+RUN bun build \
+  --compile \
+  --minify-whitespace \
+  --minify-syntax \
+  --target bun-linux-x64 \
+  --outfile server \
+  src/index.ts
 
-# -------- RUNTIME STAGE --------
-FROM oven/bun:slim
+# ---------- RUNTIME ----------
+
+FROM gcr.io/distroless/base-debian12
 
 WORKDIR /app
 
-# Copy only built output
-COPY --from=builder /app/dist ./dist
-
-# Optional: copy .env if needed (or inject via runtime env)
-# COPY .env .env
+COPY --from=builder /app/server /app/server
 
 EXPOSE 3000
 
-CMD ["bun", "dist/index.js"]
+CMD ["/app/server"]
 
