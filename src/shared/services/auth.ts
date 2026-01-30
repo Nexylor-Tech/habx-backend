@@ -69,8 +69,6 @@ export const createAuth = (mongoClient: any) => {
     },
     user: {
       additionalFields: {
-        first_name: { type: "string", required: false },
-        last_name: { type: "string", required: false },
         subscription_tier: { type: "string", defaultValue: "free" },
         workspace_limit: { type: "number", defaultValue: WORKSPACE_LIMITS['free'] },
         ai_generation_limit: { type: "number", defaultValue: AI_LIMITS['free'] },

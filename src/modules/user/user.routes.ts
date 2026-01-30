@@ -12,8 +12,7 @@ export const userRoutes = (app: Elysia) => app
     return {
       id: dbUser._id,
       email: dbUser.email,
-      firstName: dbUser.first_name,
-      lastName: dbUser.last_name,
+      name: dbUser.name,
       isPremium: dbUser.is_premium,
       subscriptionTier: dbUser.subscription_tier,
       subscriptionStatus: dbUser.subscription_status,
@@ -23,4 +22,4 @@ export const userRoutes = (app: Elysia) => app
       workspaceLimit: dbUser.workspace_limit,
       createdAt: dbUser.createdAt
     }
-  },)
+  })
